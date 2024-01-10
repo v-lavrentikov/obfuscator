@@ -1,0 +1,56 @@
+asm volatile(
+    ".intel_syntax noprefix\n"
+    "push {{reg:1}}\n"
+    "push {{reg:2}}\n"
+    "push {{reg:3}}\n"
+    "push {{reg:1}}\n"
+    "sub [rsp], {{reg:1}}\n"
+    "pop {{reg:1}}\n"
+    "mov {{reg:1:b}}, 0x60\n"
+    "jz 0f\n"
+    {{ops}}
+    "5:\n"
+    "pop {{reg:3}}\n"
+    "pop {{reg:2}}\n"
+    "lea {{reg:1}}, [rip+6f-1]\n"
+    "push {{reg:1}}\n"
+    "inc qword ptr [rsp]\n"
+    "ret\n"
+    {{ops}}
+    "2:\n"
+    "mov {{reg:2:b}}, byte ptr [{{reg:1}}+0x70]\n"
+    "jz 3f\n"
+    {{ops}}
+    "1:\n"
+    "mov {{reg:1}}, qword ptr [{{reg:1}}+0x30]\n"
+    "jz 2b\n"
+    {{ops}}
+    "4:\n"
+    "mov {{reg:2:b}}, byte ptr [{{reg:1}}+0x74]\n"
+    "sub {{reg:2:b}}, 2\n"
+    "not {{reg:2:b}}\n"
+    "sub {{reg:2:b}}, 1\n"
+    "jz 5b\n"
+    "sub {{reg:2:d}}, {{reg:2:d}}\n"
+    "div {{reg:2:b}}\n"
+    {{ops}}
+    "0:\n"
+    "mov {{reg:1}}, qword ptr gs:[{{reg:1}}]\n"
+    "jz 1b\n"
+    {{ops}}
+    "3:\n"
+    "mov {{reg:3:b}}, 2\n"
+    "not {{reg:3:b}}\n"
+    "and {{reg:2:b}}, {{reg:3:b}}\n"
+    "jz 4b\n"
+    "mov {{reg:3:d}}, {{reg:2:d}}\n"
+    "not {{reg:3:d}}\n"
+    "and {{reg:2:d}}, {{reg:3:d}}\n"
+    "div {{reg:2:d}}\n"
+    {{ops}}
+    "6:\n"
+    "pop {{reg:1}}\n"
+    ".att_syntax prefix\n"
+    ::
+    : "memory"
+);
