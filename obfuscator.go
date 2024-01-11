@@ -16,9 +16,9 @@ func main() {
 	numVariants[SNPT_TYPE_SND] = flag.Int("snds", 5, "Number of variants for sandbox detection snippets")
 	numVariants[SNPT_TYPE_VM] = flag.Int("vms", 5, "Number of variants for VM detection snippets")
 
-	tpl := flag.String("tpl", "", "C file with template")
-	workingDir = flag.String("dir", ".", "Working directory")
-	shell := flag.String("shell", "", "Base64 string with payload. Use 'msfvenom -f base64 ...'")
+	tpl := flag.String("tpl", "", "C file with a template for processing")
+	workingDir = flag.String("dir", ".", "Working directory with the 'tpls' folder. May be useful if the binary is called from another location")
+	shell := flag.String("shell", "", "Base64 string with shellcode. Use 'msfvenom -f base64 ...' to generate")
 	maxAsmOps := flag.Int("ops", 5, "Max count of random operations for ASM snippet")
 
 	flag.Parse()
