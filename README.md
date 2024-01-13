@@ -51,7 +51,7 @@ The framework allows to insert a random constant into the source code using the 
 The framework allows to encrypt string variables used in the source code. To declare and encrypt a string, use the following instruction `{{str-alloc:...:...}}`. This instruction allows to declare a string variable using its name and value `{{str-alloc:my_var_name:my variable text}}`. The variable name can contain letters, numbers, and underscores. The characters `{` and `}` in the string text can be escaped with `\` in the cases of `{{`, `}}`, `\{` and `\}`.
 ### Shellcode
 Calling shellcode is an additional feature of this framework. Pass shellcode as a base64 string by using `-shell` command prompt argument. Use the Metasploit tool `msfvenom` with the argument `-f base64` to generate any type of shellcode.
-## ASM Snipets
+## ASM Snippets
 This type of snippets represents the content of the C language `asm volatile()` compiler instruction with assembly code. Use the "memory" clobber to add the memory barrier. The ASM snippet provides two types of framework-based instructions:
 - `{{ops}}` inserts dummy assembly instructions that obfuscate the binary. The number of instructions varies from 0 to the value of the `-ops` argument passed on the command prompt. Pass 0 to tell the framework not to generate dummy instructions
 - `{{reg:...:...}}` instruction tells the framework to insert a random register to add polymorphism to the fragment. The first argument specifies the register number. The same template will generate different assembly code each time. Up to 6 (numbers from 0 to 9 can be used) general purpose registers can be inserted: `rax`, `rbx`, `rcx`, `rdx`, `rsi`, `rdi`. The second argument tells the framework the size of the register: without argument - the preprocessor inserts a QWORD register, `d` - inserts a DWORD register, `w` - inserts a WORD register, `b` inserts a BYTE register
@@ -61,7 +61,7 @@ The framework generates several variants of ASM snippets and inserts them into t
 This type of snippets represents the body of a C function that takes a caller parameter. The caller is passed to the function by value for better binary obfuscation. The C snippet allows to use any ASM fragments, call API functions and execute shellcode. The framework generates several variants of C snippets and inserts them into the resulting source file as inline C functions with names constructed according to the following pattern `<type>_<language>_<name>_<variant number>`.
 ## Available Snippets
 - obfs
-  - **00**, **01**, **02**, **03**, **04**, **05** - contains six code obfuscation snippets that implement obfuscation techniques such as: Logic Flow Obfuscation, NOP Obfuscation, Anti-Disassembler Code Obfuscation, Trampolines and Instruction Permutations
+  - **00**, **01**, **02**, **03**, **04**, **05** - six code obfuscation snippets that implement obfuscation techniques such as: Logic Flow Obfuscation, NOP Obfuscation, Anti-Disassembler Code Obfuscation, Trampolines and Instruction Permutations
 - dbgs
   - asm
     - **debug_flag** - direct debugger detection by analyzing the PEB structure
