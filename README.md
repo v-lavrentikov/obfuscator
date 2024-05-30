@@ -12,7 +12,7 @@ The framework provides two types of snippet templates based on the ASM and C cod
 - snds
   - asm
   - c
-- vms
+- vmds
   - asm
   - c
 
@@ -22,18 +22,18 @@ C template represents the body of a C language function. Its code uses framework
 ## Snippets
 The framework contains four types of snippets:
 - **Obfuscation snippets (obfs)** are used for binary obfuscation. They contain dummy assembly code that does nothing, and their only purpose is to obfuscate the application's logic. These snippets can only contain ASM code templates. To insert such snippets into C code, use the `{{obf:*}}` instruction
-- **Anti-Debugging snippets (dbgs)** are used to determine whether an application is being debugged. These snippets may contain ASC and C code templates. To insert such snippets into C code, use the `{{dbg:*}}` instruction
-- **Sandbox Detection snippets (snds)** are used to determine whether the application is running in an antivirus sandbox. These snippets may contain ASC and C code templates. To insert such snippets into C code, use the `{{snd:*}}` instruction
-- **Virtual Machine Detection snippets (vms)** are used to detect guest operating systems running under a virtual machine. These snippets may contain ASC and C code templates. To insert such snippets into C code, use the `{{vm:*}}` instruction
+- **Anti-Debugging snippets (dbgs)** are used to determine whether an application is being debugged. These snippets may contain ASM and C code templates. To insert such snippets into C code, use the `{{dbg:*}}` instruction
+- **Sandbox Detection snippets (snds)** are used to determine whether the application is running in an antivirus sandbox. These snippets may contain ASM and C code templates. To insert such snippets into C code, use the `{{snd:*}}` instruction
+- **Virtual Machine Detection snippets (vmds)** are used to detect guest operating systems running under a virtual machine. These snippets may contain ASM and C code templates. To insert such snippets into C code, use the `{{vmd:*}}` instruction
 
 In the provided framework-based instructions can be used asterisk `{{obf:*}}` to insert any snippet, snippet name `{{snd:clone}}` or a comma separated list with the snippet names `{{snd:clone,rdtsc}}`. Spaces are not allowed, names may contain letters, numbers and underscores. The snippet name is the same as the template file name without the `*.c` extension. Snippets with different types and codebases can use the same names.
 ## Code
 The framework contains three templates with C code:
 - `header.c` template contains all the framework logic that should be inserted into the resulting C file. Use the `{{header}}` instruction to place this code in the C source file
-- `api.c` template contains all the logic related to the Win32 API (at the moment only kernel32.dll supported) calls and decryption functions. This code will be placed in the C source file via the header template
+- `api.c` template contains all the logic related to the Win32 API (at the moment only `kernel32.dll` supported) calls and decryption functions. This code will be placed in the C source file via the header template
 - `shell.c` template contains logic related to the shellcode execution. This code will be placed in the C source file via the header template if the shellcode is provided in the command prompt. Shellcode may be called from code using the `{{shell-exec}}` instruction
 ### Win32 API Calls
-The framework provides two types of instructions for API calls (only kernel32.dll supported). Instructions for calls with `{{api-n:...}}(...)` and without `{{api-0:...}}()` arguments. Each instruction should contain the API function name `{{api-n:Sleep}}`, `{{api-0:GetLastError}}`. The function name will be encrypted and added to the application. Before calling a function, its name will be decrypted and filled with zero bytes after use.
+The framework provides two types of instructions for API calls (only `kernel32.dll` supported). Instructions for calls with `{{api-n:...}}(...)` and without `{{api-0:...}}()` arguments. Each instruction should contain the API function name `{{api-n:Sleep}}`, `{{api-0:GetLastError}}`. The function name will be encrypted and added to the application. Before calling a function, its name will be decrypted and filled with zero bytes after use.
 
 To call API functions, the framework uses a special caller structure that should be initialized once in the project's main function and then passed as a parameter to every function that uses API calls or C code snippets. To work with the API caller, use the following instructions:
 - `{{caller-init}}` initializes the caller variable
@@ -77,7 +77,7 @@ This type of snippets represents the body of a C function that takes a caller pa
     - **memory** - allocation of a huge amount (~100 MB) of memory to force the sandbox analysis to end
     - **query_performance_counter** - detecting the difference between the specified and actual process sleep time using the `QueryPerformanceCounter` Win32 API call
     - **rdtsc** - detecting the difference between the specified and actual process sleep time using the `rdtsc` CPU instruction
-- vms
+- vmds
   - c
     - **virtual_box** - detecting the presence of the VirtualBox by checking the existence of the pseudo-device `\\.\VBoxMiniRdrDN` on the system
 ## Execution
@@ -86,8 +86,8 @@ The framework provides the following comand prompt arguments:
 - `-dir` sets the working directory with the tpls folder. May be useful if the binary is called from another location
 - `-tpl` sets a C file with a template for processing
 - `-ops` sets the maximum number of random operations for the ASM fragment
-- `-obfs`, `-dbgs`, `-snds`, `-vms` set the number of variants for each snippet type
-- `-shell` sets a Base64 string with shellcode. Use "msfvenom -f base64 ..." to generate
+- `-obfs`, `-dbgs`, `-snds`, `-vmds` set the number of variants for each snippet type
+- `-shell` sets a Base64 string with shellcode. Use `msfvenom -f base64 ...` to generate
 ## Example
 This project contains an example template with a C program that demonstrates the framework's capabilities. Use the `Makefile` from the `example` directory to create and compile the obfuscated binary. The example uses shellcode to call a Windows calculator that was generated with the Metasploit framework.
 ## Disclaimer

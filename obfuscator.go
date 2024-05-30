@@ -14,7 +14,7 @@ func main() {
 	numVariants[SNPT_TYPE_OBF] = flag.Int("obfs", 5, "Number of variants for obfuscation snippets")
 	numVariants[SNPT_TYPE_DBG] = flag.Int("dbgs", 5, "Number of variants for anti-debug snippets")
 	numVariants[SNPT_TYPE_SND] = flag.Int("snds", 5, "Number of variants for sandbox detection snippets")
-	numVariants[SNPT_TYPE_VM] = flag.Int("vms", 5, "Number of variants for VM detection snippets")
+	numVariants[SNPT_TYPE_VMD] = flag.Int("vmds", 5, "Number of variants for VMD detection snippets")
 
 	tpl := flag.String("tpl", "", "C file with a template for processing")
 	workingDir = flag.String("dir", ".", "Working directory with the 'tpls' folder. May be useful if the binary is called from another location")

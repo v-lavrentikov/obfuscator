@@ -252,7 +252,7 @@ func fillSnippets(code string, table map[string]SnippetsMap, langMask Lang, name
 		tpl = `\*`
 	}
 
-	r := regexp.MustCompile(fmt.Sprintf("{{(obf|dbg|snd|vm):(%s)}}", tpl))
+	r := regexp.MustCompile(fmt.Sprintf("{{(obf|dbg|snd|vmd):(%s)}}", tpl))
 	return r.ReplaceAllStringFunc(code, func(str string) string {
 		groups := r.FindStringSubmatch(str)
 

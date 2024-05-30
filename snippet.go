@@ -50,7 +50,7 @@ const (
 	SNPT_TYPE_OBF SnippetType = iota
 	SNPT_TYPE_DBG
 	SNPT_TYPE_SND
-	SNPT_TYPE_VM
+	SNPT_TYPE_VMD
 )
 
 func (t SnippetType) String() string {
@@ -61,14 +61,14 @@ func (t SnippetType) String() string {
 		return "dbg"
 	case SNPT_TYPE_SND:
 		return "snd"
-	case SNPT_TYPE_VM:
-		return "vm"
+	case SNPT_TYPE_VMD:
+		return "vmd"
 	default:
 		return "unknown"
 	}
 }
 
-var snippetTypes = []SnippetType{SNPT_TYPE_OBF, SNPT_TYPE_DBG, SNPT_TYPE_SND, SNPT_TYPE_VM}
+var snippetTypes = []SnippetType{SNPT_TYPE_OBF, SNPT_TYPE_DBG, SNPT_TYPE_SND, SNPT_TYPE_VMD}
 
 type Variant struct {
 	name  string

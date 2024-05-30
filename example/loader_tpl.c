@@ -42,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
         {{obf:*}} {{snd:*}}
         {{obf:*}} {{snd:query_performance_counter,rdtsc}}
 
-        // {{obf:*}} {{vm:*}}
+        // {{obf:*}} {{vmd:*}}
         
         {{obf:*}}
         {{shell-exec}}
