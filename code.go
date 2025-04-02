@@ -134,7 +134,7 @@ func fillApiCalls(code string, defs map[string]*DataDefine) string {
 		def := DataDefine{0, groups[2], nil}
 		name := fmt.Sprintf(TPL_API_PROC_NAME, def.value)
 		defs[name] = &def
-		if def.value == valueGetProcAddress {
+		if def.value == VALUE_GET_PROC_ADDRESS {
 			return name
 		} else {
 			if groups[1] == "0" {
@@ -148,11 +148,12 @@ func fillApiCalls(code string, defs map[string]*DataDefine) string {
 
 func fillStrings(code string, defs map[string]*DataDefine) string {
 	counter := 0
-	r := regexp.MustCompile(`{{str-(alloc|free):([0-9a-zA-Z_]+)(|:(.*))}}`)
+	r := regexp.MustCompile(`{{str-(alloc|realloc|free):([0-9a-zA-Z_]+)(|:(.*))}}`)
 	return r.ReplaceAllStringFunc(code, func(str string) string {
 		groups := r.FindStringSubmatch(str)
+		call := groups[1]
 
-		if groups[1] == "free" {
+		if call == "free" {
 			if groups[3] == "" {
 				return fmt.Sprintf(TPL_STRING_FREE, groups[2])
 			}
@@ -164,13 +165,17 @@ func fillStrings(code string, defs map[string]*DataDefine) string {
 		key := fmt.Sprintf(TPL_STRING_NAME, counter, name)
 		defs[key] = &DataDefine{0, value, nil}
 		counter++
-		return fmt.Sprintf(TPL_STRING_ALLOC, key, name)
+
+		if call == "alloc" {
+			return fmt.Sprintf(TPL_STRING_ALLOC, key, name)
+		}
+		return fmt.Sprintf(TPL_STRING_REALLOC, key, name)
 	})
 }
 
 func addPredefinedStrings(defs map[string]*DataDefine) {
-	defs[NAME_API_KERNEL] = &DataDefine{0, valueApiKernel, nil}
-	defs[NAME_API_GET_PROC_ADDRESS] = &DataDefine{0, valueGetProcAddress, nil}
+	defs[NAME_API_KERNEL] = &DataDefine{0, VALUE_API_KERNEL, nil}
+	defs[NAME_API_GET_PROC_ADDRESS] = &DataDefine{0, VALUE_GET_PROC_ADDRESS, nil}
 }
 
 func fillData(code string, defs map[string]*DataDefine) string {

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 var (
@@ -202,30 +204,31 @@ func loadSnippets(templates []*Template, typ SnippetType, numVariants, maxAsmOps
 	return snippets
 }
 
-func processAsmCode(code string, maxOps int) string {
-	var sb strings.Builder
+func processCCode(code string) string {
+	return processCode(code, func(sb *strings.Builder, line string) {
+		sb.WriteString(fmt.Sprintf("%4c%s%s", ' ', line, fmt.Sprintln()))
+	})
+}
 
-	code = fillAsmRegs(code)
-	for _, line := range strings.Split(code, "\n") {
+func processAsmCode(code string, maxOps int) string {
+	return processCode(fillAsmRegs(code), func(sb *strings.Builder, line string) {
 		pos := strings.Index(line, "{{ops}}")
 		if pos > 0 {
 			if maxOps < 1 {
-				continue
+				return
 			}
 			for i := 0; i <= randInt(maxOps); i++ {
 				cmd := snippetOps[randInt(len(snippetOps))]
 				cmd = strings.Replace(cmd, "r1", snippetRegs[randInt(len(snippetRegs))], 1)
 				cmd = strings.Replace(cmd, "r2", snippetRegs[randInt(len(snippetRegs))], 1)
 				cmd = strings.Replace(cmd, "b1", fmt.Sprintf("0x%02X", randInt(256)), 1)
-				format := fmt.Sprintf("%%%dc\"%%s\\n\"\n", pos+4)
-				sb.WriteString(fmt.Sprintf(format, ' ', cmd))
+				format := fmt.Sprintf("%%%dc\"%%s\\n\"%%s", pos+4)
+				sb.WriteString(fmt.Sprintf(format, ' ', cmd, fmt.Sprintln()))
 			}
 		} else {
-			sb.WriteString(fmt.Sprintf("%4c%s\n", ' ', line))
+			sb.WriteString(fmt.Sprintf("%4c%s%s", ' ', line, fmt.Sprintln()))
 		}
-	}
-
-	return sb.String()
+	})
 }
 
 func fillAsmRegs(code string) string {
@@ -252,10 +255,27 @@ func fillAsmRegs(code string) string {
 	})
 }
 
-func processCCode(code string) string {
+func processCode(code string, step func(*strings.Builder, string)) string {
 	var sb strings.Builder
-	for _, line := range strings.Split(code, "\n") {
-		sb.WriteString(fmt.Sprintf("%4c%s\n", ' ', line))
+
+	sc := bufio.NewScanner(strings.NewReader(code))
+	count := 0
+
+	for sc.Scan() {
+		line := strings.TrimRightFunc(sc.Text(), unicode.IsSpace)
+
+		// Remove empty lines from the end of the snippet
+		if len(line) == 0 {
+			count++
+			continue
+		}
+		for range count {
+			sb.WriteString(fmt.Sprintln())
+		}
+		count = 0
+
+		step(&sb, line)
 	}
+
 	return sb.String()
 }

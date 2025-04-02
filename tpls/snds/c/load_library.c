@@ -1,7 +1,7 @@
-{{obf:*}} HINSTANCE hInst = {{api-n:LoadLibraryA}}("{{value:guid}}.dll");
+{{obf:*}} HINSTANCE hLib = {{api-n:LoadLibraryA}}("{{value:guid}}.dll");
 {{obf:*}}
 
-if (hInst) {
+if (hLib) {
     {{obf:*}} {{api-n:ExitProcess}}(0);
     {{obf:*}}
 }

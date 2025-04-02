@@ -12,9 +12,9 @@ var workingDir *string
 func main() {
 	numVariants := make(map[SnippetType]*int)
 	numVariants[SNPT_TYPE_OBF] = flag.Int("obfs", 5, "Number of variants for obfuscation snippets")
-	numVariants[SNPT_TYPE_DBG] = flag.Int("dbgs", 5, "Number of variants for anti-debug snippets")
-	numVariants[SNPT_TYPE_SND] = flag.Int("snds", 5, "Number of variants for sandbox detection snippets")
-	numVariants[SNPT_TYPE_VMD] = flag.Int("vmds", 5, "Number of variants for VMD detection snippets")
+	numVariants[SNPT_TYPE_DBG] = flag.Int("dbgs", 2, "Number of variants for anti-debug snippets")
+	numVariants[SNPT_TYPE_SND] = flag.Int("snds", 2, "Number of variants for sandbox detection snippets")
+	numVariants[SNPT_TYPE_VMD] = flag.Int("vmds", 2, "Number of variants for VMD detection snippets")
 
 	tpl := flag.String("tpl", "", "C file with a template for processing")
 	workingDir = flag.String("dir", ".", "Working directory with the 'tpls' folder. May be useful if the binary is called from another location")

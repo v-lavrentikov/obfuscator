@@ -2,6 +2,7 @@
 #define _obf_API_CALL_N(caller, name)       ((_obf_api_proc_n_t)_obf_api_call((caller).kernel, (caller).get_proc, name))
 
 #define _obf_STRING_ALLOC(str, name)        char *name = _obf_alloc_decrypted_string(str, _obf_api_key, _obf_api_key_size);
+#define _obf_STRING_REALLOC(str, name)      name = _obf_alloc_decrypted_string(str, _obf_api_key, _obf_api_key_size);
 #define _obf_STRING_FREE(str)               _obf_free_decrypted_string(str)
 
 typedef PVOID (WINAPI *_obf_api_proc_0_t)();

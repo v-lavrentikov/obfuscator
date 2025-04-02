@@ -1,9 +1,9 @@
-BOOL bDebuggerPresent;
+BOOL bResult;
 
-{{obf:*}} HANDLE handle = {{api-0:GetCurrentProcess}}();
+{{obf:*}} HANDLE hProcess = {{api-0:GetCurrentProcess}}();
 {{obf:*}}
 
-if ({{api-n:CheckRemoteDebuggerPresent}}(handle, &bDebuggerPresent) && bDebuggerPresent) {
+if ({{api-n:CheckRemoteDebuggerPresent}}(hProcess, &bResult) && bResult) {
     {{obf:*}} {{api-n:ExitProcess}}(0);
 }
 

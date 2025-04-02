@@ -27,6 +27,7 @@ const (
 	TPL_CUSTOM_DEFINE    = "#define %-43s %v"
 	TPL_STRING_NAME      = "_obf_str_%02d_%s"
 	TPL_STRING_ALLOC     = "_obf_STRING_ALLOC(%s, %s);"
+	TPL_STRING_REALLOC   = "_obf_STRING_REALLOC(%s, %s);"
 	TPL_STRING_FREE      = "_obf_STRING_FREE(%s);"
 
 	CODE_SHELL_CALL     = "_obf_execute_shellcode(caller);"
@@ -45,8 +46,8 @@ const (
 	NAME_SHELL_KEY            = "_obf_shellcode_key"
 	NAME_SHELL_SIZE           = "_obf_shellcode_size"
 
-	valueApiKernel      = "kernel32.dll"
-	valueGetProcAddress = "GetProcAddress"
+	VALUE_API_KERNEL       = "kernel32.dll"
+	VALUE_GET_PROC_ADDRESS = "GetProcAddress"
 )
 
 type Lang uint
