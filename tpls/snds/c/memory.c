@@ -1,6 +1,5 @@
-{{obf:*}}
-size_t size = (1024 * 1024 * 100) + (1024 * {{value:byte}}) + {{value:byte}}; // ~100 MB
-char *buf = (char *)malloc(size);
+{{obf:*}} size_t size = (1024 * 1024 * 100) + (1024 * {{value:byte}}) + {{value:byte}}; // ~100 MB
+{{obf:*}} char *buf = (char *)malloc(size);
 {{obf:*}}
 
 if (buf) {

@@ -37,10 +37,10 @@ The framework provides two types of instructions for API calls (only `kernel32.d
 
 To call API functions, the framework uses a special caller structure that should be initialized once in the project's main function and then passed as a parameter to every function that uses API calls or C code snippets. To work with the API caller, use the following instructions:
 - `{{caller-init}}` initializes the caller variable
-- `{{caller}}` inserts the caller variable, use it to pass caller to the function as a parameter
+- `{{caller-var}}` inserts the caller variable, use it to pass caller to the function as a parameter
 - `{{caller-ptr}}` inserts the caller pointer, use it to pass caller to the function as a parameter
-- `{{caller-var}}` inserts the caller variable declaration, use it to declare a function parameter 
-- `{{caller-var-ptr}}` inserts the caller pointer declaration, uses it to declare a function parameter
+- `{{caller-decl-var}}` inserts the caller variable declaration, use it to declare a function parameter 
+- `{{caller-decl-ptr}}` inserts the caller pointer declaration, uses it to declare a function parameter
 - `{{caller-cast}}` declares the caller pointer and initializes it by casting from another pointer, use it in case of API callback functions with arguments of type `void*`
 ### Constants
 The framework allows to insert a random constant into the source code using the following instructions:
@@ -48,7 +48,7 @@ The framework allows to insert a random constant into the source code using the 
 - `{{value:uuid}}` inserts an UUID as a string of hexadecimal numbers without delimiters
 - `{{value:guid}}` inserts an UUID in the Windows format with braces and delimiters
 ### Strings
-The framework allows to encrypt string variables used in the source code. To declare and encrypt a string, use the following instruction `{{str-alloc:...:...}}`. This instruction allows to declare a string variable using its name and value `{{str-alloc:my_var_name:my variable text}}`. The variable name can contain letters, numbers, and underscores. The characters `{` and `}` in the string text can be escaped with `\` in the cases of `{{`, `}}`, `\{` and `\}`. An already created string variable can be reassigned using the `{{str-realloc:...:...}}` instruction with the same parameters. After use, the string should be released using the `{{str-free:...}}` instruction, passing the name of the string variable.
+The framework allows to encrypt string variables used in the source code. To declare and encrypt a string, use the following instruction `{{str-alloc:...:...}}`. This instruction allows to declare a string variable using its name and value `{{str-alloc:my_var_name:my variable text}}`. The variable name can contain letters, numbers, and underscores. The characters `{` and `}` in the string text must be escaped with `\`, for example `\{` and `\}`. An already created string variable can be reassigned using the `{{str-realloc:...:...}}` instruction with the same parameters. After use, the string should be released using the `{{str-free:...}}` instruction, passing the name of the string variable.
 ### Shellcode
 Calling shellcode is an additional feature of this framework. Pass shellcode as a base64 string by using `-shell` command prompt argument. Use the Metasploit tool `msfvenom` with the argument `-f base64` to generate any type of shellcode.
 ## ASM Snippets
@@ -70,6 +70,7 @@ This type of snippets represents the body of a C function that takes a caller pa
   - c
     - **check_remote_debugger_present** - calling `CheckRemoteDebuggerPresent` Win32 API function
     - **is_debugger_present** - calling `IsDebuggerPresent` Win32 API function
+    - **heap_protection** - checking the end of the allocated heap block
 - snds
   - c
     - **clone** - creating a copy of the executing process

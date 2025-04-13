@@ -30,13 +30,13 @@ const (
 	TPL_STRING_REALLOC   = "_obf_STRING_REALLOC(%s, %s);"
 	TPL_STRING_FREE      = "_obf_STRING_FREE(%s);"
 
-	CODE_SHELL_CALL     = "_obf_execute_shellcode(caller);"
-	CODE_CALLER_INIT    = "_obf_api_caller_t caller; _obf_get_caller(&caller);"
-	CODE_CALLER         = "caller"
-	CODE_CALLER_PTR     = "&caller"
-	CODE_CALLER_VAR     = "_obf_api_caller_t caller"
-	CODE_CALLER_VAR_PTR = "_obf_api_caller_t *caller"
-	CODE_CALLER_CAST    = "_obf_api_caller_t caller = *(_obf_api_caller_t *)"
+	CODE_SHELL_CALL      = "_obf_execute_shellcode(caller);"
+	CODE_CALLER_INIT     = "_obf_api_caller_t caller; _obf_get_caller(&caller);"
+	CODE_CALLER_VAR      = "caller"
+	CODE_CALLER_PTR      = "&caller"
+	CODE_CALLER_DECL_VAR = "_obf_api_caller_t caller"
+	CODE_CALLER_DECL_PTR = "_obf_api_caller_t *caller"
+	CODE_CALLER_CAST     = "_obf_api_caller_t caller = *(_obf_api_caller_t *)"
 
 	NAME_API_KERNEL           = "_obf_api_kernel"
 	NAME_API_GET_PROC_ADDRESS = "_obf_api_get_proc_address"
@@ -78,17 +78,6 @@ func (lang Lang) CallFormat() string {
 		return TPL_SNIPPET_ASM_CALL
 	default:
 		panic("Assert: Invalid Language passed for Snippet Call Format")
-	}
-}
-
-func (lang Lang) TemplateKey() string {
-	switch lang {
-	case LANG_C:
-		return "{{c-snippets}}"
-	case LANG_ASM:
-		return "{{asm-snippets}}"
-	default:
-		panic("Assert: Invalid Language passed for Snippets Template Key")
 	}
 }
 

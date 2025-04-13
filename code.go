@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,55 +14,40 @@ type DataDefine struct {
 	data   []byte
 }
 
-func loadCode(name string) string {
-	return loadFile(fmt.Sprintf(TPL_CODE_FILE, *workingDir, name))
-}
-
 func generateCode(code string, table map[string]SnippetsMap, shell []byte) string {
-	dataDefs := make(map[string]*DataDefine)
-	customDefs := make(map[string]interface{})
-	hasShell := len(shell) > 0
-
-	// Fill base logic
-	code = fillHeader(code, hasShell)
-
-	// Fill named snippets first to distribute the snippets evenly
-	fillCSnippets(table, true)
-	code = fillSnippets(code, table, LANG_MASK_ALL, true)
-
-	// Fill random snippets
-	fillCSnippets(table, false)
-	code = fillSnippets(code, table, LANG_MASK_ALL, false)
-
-	// Fill C-snippet functions
-	code = fillSnippetFuncs(code, table, LANG_C)
-
-	// Fill API calls
-	code = fillApiCalls(code, dataDefs)
-
-	// Fill string variables
-	code = fillStrings(code, dataDefs)
-
-	// Append and encrypt data
-	addPredefinedStrings(dataDefs)
-	customDefs[NAME_API_KEY_SIZE] = encryptStrings(dataDefs)
-	if hasShell {
-		customDefs[NAME_SHELL_SIZE] = encryptShellcode(dataDefs, shell)
+	dataDefs := map[string]*DataDefine{
+		NAME_API_KERNEL:           {0, VALUE_API_KERNEL, nil},
+		NAME_API_GET_PROC_ADDRESS: {0, VALUE_GET_PROC_ADDRESS, nil},
 	}
 
-	// Fill variables
-	code = fillValues(code)
-	code = fillData(code, dataDefs)
-	code = fillDataDefinitions(code, dataDefs)
-	code = fillCustomDefinitions(code, customDefs)
+	// Fill header, API and shellcode
+	code = fillCodePass1(code, len(shell) > 0)
 
-	// Fill ASM-snippet functions. Call this function last because it generates a lot of code
-	code = fillSnippetFuncs(code, table, LANG_ASM)
+	// Fill the snippet calls:
+	// * First fill the named snippets to distribute them evenly, then the random ones
+	// * Fill the snippet calls both in the main code and within C-snippets
+	fillCSnippets(table, true)
+	code = fillSnippetCalls(code, table, LANG_MASK_ALL, true)
+	fillCSnippets(table, false)
+	code = fillSnippetCalls(code, table, LANG_MASK_ALL, false)
+
+	// Fill the C-snippet function definitions
+	code = strings.Replace(code, "{{c-snippets}}", generateSnippetFuncs(table, LANG_C), 1)
+
+	// Fill API, string and caller calls
+	code = fillCodePass2(code, dataDefs)
+
+	// Fill defines, variables, values and ASM-snippet functions
+	code = fillCodePass3(code, dataDefs, table, shell)
 
 	return code
 }
 
-func fillHeader(code string, hasShell bool) string {
+func loadCode(name string) string {
+	return loadFile(fmt.Sprintf(TPL_CODE_FILE, *workingDir, name))
+}
+
+func fillCodePass1(code string, hasShell bool) string {
 	var shell string
 	var shellExec string
 	if hasShell {
@@ -77,108 +61,161 @@ func fillHeader(code string, hasShell bool) string {
 	header := loadCode("header")
 	r := regexp.MustCompile(`{{(api|shell)}}`)
 	header = r.ReplaceAllStringFunc(header, func(str string) string {
-		switch str {
-		case "{{api}}":
+		if str == "{{api}}" {
 			return loadCode("api")
-		default:
-			return shell
 		}
+		return shell
 	})
 
-	r = regexp.MustCompile(`{{(header|shell-exec|caller-[0-9a-zA-Z_]*)}}`)
+	r = regexp.MustCompile(`{{(header|shell-exec)}}`)
+	return r.ReplaceAllStringFunc(code, func(str string) string {
+		if str == "{{header}}" {
+			return header
+		}
+		return shellExec
+	})
+}
+
+func fillCodePass2(code string, defs map[string]*DataDefine) string {
+	cnt := 0
+
+	// Since the second group can contain any characters, we stop the search when the substring "}}" appears.
+	// Golang regexp does not currently support the statement "?!": `{{(api|str|caller)-(((?!}}).)+)}}`
+	r := regexp.MustCompile(`{{(api|str|caller)-(((\\\{|\\\}|)[^{}]*)+)}}`)
+	return r.ReplaceAllStringFunc(code, func(str string) string {
+		groups := r.FindStringSubmatch(str)
+		group := groups[2]
+		var call string
+
+		switch groups[1] {
+		case "api":
+			call = generateApiCall(group, defs)
+		case "str":
+			call = generateStringCall(group, &cnt, defs)
+		default:
+			call = generateCaller(group)
+		}
+
+		if len(call) > 0 {
+			return call
+		}
+		return str
+	})
+}
+
+func generateApiCall(str string, defs map[string]*DataDefine) string {
+	r := regexp.MustCompile(`^(0|n):([0-9a-zA-Z_]+)$`)
+	groups := r.FindStringSubmatch(str)
+	if len(groups) < 2 {
+		return ""
+	}
+
+	key := fmt.Sprintf(TPL_API_PROC_NAME, groups[2])
+	if _, ok := defs[key]; !ok {
+		defs[key] = &DataDefine{0, groups[2], nil}
+	}
+
+	var tpl string
+	if groups[1] == "0" {
+		tpl = TCP_API_CALL_0
+	} else {
+		tpl = TCP_API_CALL_N
+	}
+	return fmt.Sprintf(tpl, key)
+}
+
+func generateStringCall(str string, cnt *int, defs map[string]*DataDefine) string {
+	r := regexp.MustCompile(`^(alloc|realloc|free):([0-9a-zA-Z_]+)($|:(.*)$)`)
+	groups := r.FindStringSubmatch(str)
+	if len(groups) < 4 {
+		return ""
+	}
+
+	call := groups[1]
+	if call == "free" {
+		if groups[3] == "" {
+			return fmt.Sprintf(TPL_STRING_FREE, groups[2])
+		}
+		return ""
+	}
+
+	name := groups[2]
+	value := strings.ReplaceAll(strings.ReplaceAll(groups[4], "\\{", "{"), "\\}", "}")
+	key := fmt.Sprintf(TPL_STRING_NAME, *cnt, name)
+	defs[key] = &DataDefine{0, value, nil}
+	*cnt++
+
+	var tpl string
+	if call == "alloc" {
+		tpl = TPL_STRING_ALLOC
+	} else {
+		tpl = TPL_STRING_REALLOC
+	}
+	return fmt.Sprintf(tpl, key, name)
+}
+
+func generateCaller(str string) string {
+	r := regexp.MustCompile(`^[0-9a-zA-Z-]+$`)
+	groups := r.FindStringSubmatch(str)
+	if len(groups) < 1 {
+		return ""
+	}
+
+	switch groups[0] {
+	case "init":
+		return CODE_CALLER_INIT
+	case "var":
+		return CODE_CALLER_VAR
+	case "ptr":
+		return CODE_CALLER_PTR
+	case "decl-var":
+		return CODE_CALLER_DECL_VAR
+	case "decl-ptr":
+		return CODE_CALLER_DECL_PTR
+	case "cast":
+		return CODE_CALLER_CAST
+	default:
+		return ""
+	}
+}
+
+func fillCodePass3(code string, dataDefs map[string]*DataDefine, table map[string]SnippetsMap, shell []byte) string {
+	// Add encryption defines
+	customDefs := map[string]any{
+		NAME_API_KEY_SIZE: encryptStrings(dataDefs),
+	}
+	if len(shell) > 0 {
+		customDefs[NAME_SHELL_SIZE] = encryptShellcode(dataDefs, shell)
+	}
+
+	r := regexp.MustCompile(`{{(data|data-defs|custom-defs|asm-snippets|value:([a-z]+))}}`)
 	return r.ReplaceAllStringFunc(code, func(str string) string {
 		switch str {
-		case "{{caller-init}}":
-			return CODE_CALLER_INIT
-		case "{{caller}}":
-			return CODE_CALLER
-		case "{{caller-ptr}}":
-			return CODE_CALLER_PTR
-		case "{{caller-var}}":
-			return CODE_CALLER_VAR
-		case "{{caller-var-ptr}}":
-			return CODE_CALLER_VAR_PTR
-		case "{{caller-cast}}":
-			return CODE_CALLER_CAST
-		case "{{header}}":
-			return header
-		case "{{shell-exec}}":
-			return shellExec
+		case "{{data}}":
+			// Fill the data variable with encrypted strings
+			return generateData(dataDefs)
+		case "{{data-defs}}":
+			// Fill the definitions for encrypted strings
+			return generateDefs(dataDefs, func(k string, v *DataDefine) string {
+				return fmt.Sprintf(TPL_DATA_DEFINE, k, v.offset)
+			})
+		case "{{custom-defs}}":
+			// Fill the definitions for additional constants
+			return generateDefs(customDefs, func(k string, v any) string {
+				return fmt.Sprintf(TPL_CUSTOM_DEFINE, k, v)
+			})
+		case "{{asm-snippets}}":
+			// Fill the ASM-snippet function definitions on the last pass as they generate a lot of code
+			return generateSnippetFuncs(table, LANG_ASM)
 		default:
-			return str
+			// Fill the code with random values
+			groups := r.FindStringSubmatch(str)
+			return generateValues(groups[2])
 		}
 	})
 }
 
-func fillValues(code string) string {
-	r := regexp.MustCompile(`{{value:([a-z]+)}}`)
-	return r.ReplaceAllStringFunc(code, func(str string) string {
-		groups := r.FindStringSubmatch(str)
-		switch groups[1] {
-		case "byte":
-			return fmt.Sprintf("%d", randInt(256))
-		case "uuid":
-			return strings.Replace(uuid.NewString(), "-", "", -1)
-		case "guid":
-			return fmt.Sprintf("{%s}", uuid.NewString())
-		default:
-			return str
-		}
-	})
-}
-
-func fillApiCalls(code string, defs map[string]*DataDefine) string {
-	r := regexp.MustCompile(`{{api-(0|n):([0-9a-zA-Z_]+)}}`)
-	return r.ReplaceAllStringFunc(code, func(str string) string {
-		groups := r.FindStringSubmatch(str)
-		def := DataDefine{0, groups[2], nil}
-		name := fmt.Sprintf(TPL_API_PROC_NAME, def.value)
-		defs[name] = &def
-		if def.value == VALUE_GET_PROC_ADDRESS {
-			return name
-		} else {
-			if groups[1] == "0" {
-				return fmt.Sprintf(TCP_API_CALL_0, name)
-			} else {
-				return fmt.Sprintf(TCP_API_CALL_N, name)
-			}
-		}
-	})
-}
-
-func fillStrings(code string, defs map[string]*DataDefine) string {
-	counter := 0
-	r := regexp.MustCompile(`{{str-(alloc|realloc|free):([0-9a-zA-Z_]+)(|:(.*))}}`)
-	return r.ReplaceAllStringFunc(code, func(str string) string {
-		groups := r.FindStringSubmatch(str)
-		call := groups[1]
-
-		if call == "free" {
-			if groups[3] == "" {
-				return fmt.Sprintf(TPL_STRING_FREE, groups[2])
-			}
-			return str
-		}
-
-		name := groups[2]
-		value := strings.ReplaceAll(strings.ReplaceAll(groups[4], "\\{", "{"), "\\}", "}")
-		key := fmt.Sprintf(TPL_STRING_NAME, counter, name)
-		defs[key] = &DataDefine{0, value, nil}
-		counter++
-
-		if call == "alloc" {
-			return fmt.Sprintf(TPL_STRING_ALLOC, key, name)
-		}
-		return fmt.Sprintf(TPL_STRING_REALLOC, key, name)
-	})
-}
-
-func addPredefinedStrings(defs map[string]*DataDefine) {
-	defs[NAME_API_KERNEL] = &DataDefine{0, VALUE_API_KERNEL, nil}
-	defs[NAME_API_GET_PROC_ADDRESS] = &DataDefine{0, VALUE_GET_PROC_ADDRESS, nil}
-}
-
-func fillData(code string, defs map[string]*DataDefine) string {
+func generateData(defs map[string]*DataDefine) string {
 	const interval = 32
 
 	var list []string
@@ -197,43 +234,33 @@ func fillData(code string, defs map[string]*DataDefine) string {
 	}
 	bts = append(bts, randBytes(1+randInt(interval))...)
 
-	return strings.Replace(code, "{{data}}", formatBytesToCStrings(bts), 1)
+	return formatBytesToCStrings(bts)
 }
 
-func fillDataDefinitions(code string, defs map[string]*DataDefine) string {
-	var list []string
-	for name := range defs {
-		list = append(list, name)
-	}
-	sort.Strings(list)
-
+func generateDefs[V any](defs map[string]V, generate func(string, V) string) string {
 	var sb strings.Builder
-	for _, name := range list {
+
+	for _, key := range sortedKeys(defs) {
 		if sb.Len() > 0 {
-			sb.WriteString("\n")
+			sb.WriteString(fmt.Sprintln())
 		}
-		sb.WriteString(fmt.Sprintf(TPL_DATA_DEFINE, name, defs[name].offset))
+		sb.WriteString(generate(key, defs[key]))
 	}
 
-	return strings.Replace(code, "{{data-defs}}", sb.String(), 1)
+	return sb.String()
 }
 
-func fillCustomDefinitions(code string, defs map[string]interface{}) string {
-	var list []string
-	for name := range defs {
-		list = append(list, name)
+func generateValues(typ string) string {
+	switch typ {
+	case "byte":
+		return fmt.Sprintf("%d", randInt(256))
+	case "uuid":
+		return strings.Replace(uuid.NewString(), "-", "", -1)
+	case "guid":
+		return fmt.Sprintf("{%s}", uuid.NewString())
+	default:
+		return typ
 	}
-	sort.Strings(list)
-
-	var sb strings.Builder
-	for _, name := range list {
-		if sb.Len() > 0 {
-			sb.WriteString("\n")
-		}
-		sb.WriteString(fmt.Sprintf(TPL_CUSTOM_DEFINE, name, defs[name]))
-	}
-
-	return strings.Replace(code, "{{custom-defs}}", sb.String(), 1)
 }
 
 func fillCSnippets(table map[string]SnippetsMap, named bool) {
@@ -243,13 +270,13 @@ func fillCSnippets(table map[string]SnippetsMap, named bool) {
 				continue
 			}
 			for _, variant := range snippet.variants {
-				variant.code = fillSnippets(variant.code, table, LANG_ASM, named)
+				variant.code = fillSnippetCalls(variant.code, table, LANG_ASM, named)
 			}
 		}
 	}
 }
 
-func fillSnippets(code string, table map[string]SnippetsMap, langMask Lang, named bool) string {
+func fillSnippetCalls(code string, table map[string]SnippetsMap, langMask Lang, named bool) string {
 	var tpl string
 	if named {
 		tpl = `[0-9a-zA-Z_,]+`
@@ -269,41 +296,49 @@ func fillSnippets(code string, table map[string]SnippetsMap, langMask Lang, name
 		var variant *Variant
 		var snippet *Snippet
 
-		group := groups[2]
-		if group == "*" {
+		names := groups[2]
+		if names == "*" {
 			variant, snippet = snippets.RandomVariant(langMask)
 		} else {
-			variant, snippet = snippets.OneOfVariant(strings.Split(group, ","), langMask)
+			variant, snippet = snippets.OneOfVariant(strings.Split(names, ","), langMask)
 		}
 
 		if variant == nil {
 			return str
 		}
-
 		return fmt.Sprintf(snippet.template.lang.CallFormat(), variant.name)
 	})
 }
 
-func fillSnippetFuncs(code string, table map[string]SnippetsMap, lang Lang) string {
+func generateSnippetFuncs(table map[string]SnippetsMap, lang Lang) string {
 	var sb strings.Builder
 
-	// Order snippets by type only
+	// Sort snippets by type
 	for _, typ := range snippetTypes {
-		for _, snippet := range table[typ.String()] {
+		snippets := table[typ.String()]
+
+		// Sort snippets by name
+		for _, key := range sortedKeys(snippets) {
+			snippet := snippets[key]
 			if snippet.template.lang != lang {
 				continue
 			}
-			for _, variant := range snippet.variants {
+
+			// Sort snippets by variant
+			for _, key := range sortedKeys(snippet.variants) {
+				variant := snippet.variants[key]
 				if variant.count == 0 {
 					continue
 				}
+
 				if sb.Len() > 0 {
-					sb.WriteString("\n\n")
+					sb.WriteString(fmt.Sprintln())
+					sb.WriteString(fmt.Sprintln())
 				}
 				sb.WriteString(variant.code)
 			}
 		}
 	}
 
-	return strings.Replace(code, lang.TemplateKey(), sb.String(), 1)
+	return sb.String()
 }

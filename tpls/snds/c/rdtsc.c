@@ -1,5 +1,6 @@
 LARGE_INTEGER f, t;
-ULONGLONG interval = 3000 + ({{value:byte}} + {{value:byte}}); // ~3.5s
+
+{{obf:*}} ULONGLONG interval = 3000 + ({{value:byte}} + {{value:byte}}); // ~3.5s
 
 {{obf:*}} {{api-n:QueryPerformanceFrequency}}(&f);
 {{obf:*}} {{api-n:QueryPerformanceCounter}}(&t);

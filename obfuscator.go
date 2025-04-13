@@ -16,7 +16,7 @@ func main() {
 	numVariants[SNPT_TYPE_SND] = flag.Int("snds", 2, "Number of variants for sandbox detection snippets")
 	numVariants[SNPT_TYPE_VMD] = flag.Int("vmds", 2, "Number of variants for VMD detection snippets")
 
-	tpl := flag.String("tpl", "", "C file with a template for processing")
+	tpl := flag.String("tpl", "", "Path to C file with a template for processing")
 	workingDir = flag.String("dir", ".", "Working directory with the 'tpls' folder. May be useful if the binary is called from another location")
 	shell := flag.String("shell", "", "Base64 string with shellcode. Use 'msfvenom -f base64 ...' to generate")
 	maxAsmOps := flag.Int("ops", 5, "Max count of random operations for ASM snippet")
@@ -27,13 +27,13 @@ func main() {
 		log.Fatal("Missing required -tpl argument")
 	}
 
-	if *maxAsmOps < 0 || *maxAsmOps > 64 {
-		log.Fatal("Optional argument -ops should be in range 0..64")
+	if *maxAsmOps < 0 || *maxAsmOps > 50 {
+		log.Fatal("Optional argument -ops should be in range 0..50")
 	}
 
 	for typ, num := range numVariants {
-		if *num < 1 || *num > 16 {
-			log.Fatalf("Optional argument -%ss should be in range 1..16", typ)
+		if *num < 1 || *num > 99 {
+			log.Fatalf("Optional argument -%ss should be in range 1..99", typ)
 		}
 	}
 

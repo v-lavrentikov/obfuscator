@@ -1,11 +1,13 @@
 package main
 
 import (
+	"cmp"
 	"crypto/rand"
 	"fmt"
 	"log"
 	"math/big"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -71,4 +73,13 @@ func loadFile(path string) string {
 		log.Fatal(err)
 	}
 	return string(bts)
+}
+
+func sortedKeys[K cmp.Ordered, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

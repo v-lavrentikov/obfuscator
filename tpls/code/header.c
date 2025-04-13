@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <winternl.h>
 #include <intrin.h>
 
 #ifdef _MSC_VER

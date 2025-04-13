@@ -4,4 +4,7 @@
 
 if (hFile != INVALID_HANDLE_VALUE) {
     {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}}
 }
+
+{{obf:*}}

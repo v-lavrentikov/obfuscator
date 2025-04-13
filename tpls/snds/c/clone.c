@@ -1,8 +1,9 @@
 {{obf:*}} HANDLE hEvent = {{api-n:CreateEventA}}(NULL, TRUE, FALSE, "{{value:guid}}");
-
 {{obf:*}}
+
 if ((DWORD64){{api-0:GetLastError}}() == ERROR_ALREADY_EXISTS) {
     {{obf:*}} {{api-n:SetEvent}}(hEvent); // Kill parent process
+    {{obf:*}} {{api-n:CloseHandle}}(hEvent);
     {{obf:*}}
     return;
 }
@@ -18,6 +19,5 @@ STARTUPINFO si;
 {{obf:*}} {{api-n:GetModuleFileNameA}}(hModule, lpPath, MAX_PATH);
 {{obf:*}} {{api-n:CreateProcessA}}(lpPath, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 {{obf:*}} {{api-n:WaitForSingleObject}}(hEvent, INFINITE);
-{{obf:*}} {{api-n:CloseHandle}}(hEvent);
 {{obf:*}} {{api-n:ExitProcess}}(0);
 {{obf:*}}

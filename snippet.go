@@ -78,10 +78,12 @@ type Variant struct {
 	count int
 }
 
+type VariantsMap map[string]*Variant
+
 type Snippet struct {
 	template *Template
 	typ      SnippetType
-	variants map[string]*Variant
+	variants VariantsMap
 }
 
 func (snippet *Snippet) Key() string {
@@ -181,7 +183,7 @@ func loadSnippets(templates []*Template, typ SnippetType, numVariants, maxAsmOps
 		snippet := &Snippet{
 			template,
 			typ,
-			make(map[string]*Variant),
+			make(VariantsMap),
 		}
 
 		key := snippet.Key()
