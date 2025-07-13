@@ -21,8 +21,8 @@ const (
 	TPL_SNIPPET_C_CALL   = "%s(caller);"
 	TPL_SNIPPET_ASM_CALL = "%s();"
 	TPL_API_PROC_NAME    = "_obf_api_proc_%s"
-	TCP_API_CALL_0       = "_obf_API_CALL_0(caller, %s)"
-	TCP_API_CALL_N       = "_obf_API_CALL_N(caller, %s)"
+	TPL_API_CALL_0       = "_obf_API_CALL_0(caller, %s)"
+	TPL_API_CALL_N       = "_obf_API_CALL_N(caller, %s)"
 	TPL_DATA_DEFINE      = "#define %-43s (_obf_data + %d)"
 	TPL_CUSTOM_DEFINE    = "#define %-43s %v"
 	TPL_STRING_NAME      = "_obf_str_%02d_%s"
@@ -111,16 +111,15 @@ func loadTemplates(dir string, lang Lang) []*Template {
 		name := file.Name()
 		ext := filepath.Ext(name)
 
-		if ext != ".c" {
+		if strings.ToLower(ext) != ".c" {
 			continue
 		}
 
-		template := &Template{
+		templates = append(templates, &Template{
 			lang,
 			cFuncName(strings.TrimSuffix(name, ext)),
 			loadFile(path.Join(dir, name)),
-		}
-		templates = append(templates, template)
+		})
 	}
 
 	return templates

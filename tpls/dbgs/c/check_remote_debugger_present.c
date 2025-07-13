@@ -5,6 +5,7 @@ BOOL bResult;
 
 if ({{api-n:CheckRemoteDebuggerPresent}}(hProcess, &bResult) && bResult) {
     {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}}
 }
 
 {{obf:*}}

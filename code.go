@@ -117,9 +117,9 @@ func generateApiCall(str string, defs map[string]*DataDefine) string {
 
 	var tpl string
 	if groups[1] == "0" {
-		tpl = TCP_API_CALL_0
+		tpl = TPL_API_CALL_0
 	} else {
-		tpl = TCP_API_CALL_N
+		tpl = TPL_API_CALL_N
 	}
 	return fmt.Sprintf(tpl, key)
 }
