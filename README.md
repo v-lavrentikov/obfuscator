@@ -79,6 +79,8 @@ This type of snippets represents the body of a C function that takes a caller pa
     - **query_performance_counter** - detecting the difference between the specified and actual process sleep time using the `QueryPerformanceCounter` Win32 API call
     - **rdtsc** - detecting the difference between the specified and actual process sleep time using the `rdtsc` CPU instruction
 - vmds
+  - asm
+    - **cpuid** - detecting the presence of a VM by checking some flags returned by CPUID(1)
   - c
     - **virtual_box** - detecting the presence of the VirtualBox by checking the existence of the pseudo-device `\\.\VBoxMiniRdrDN` on the system
 ## Execution
