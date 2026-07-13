@@ -55,11 +55,11 @@ asm volatile(
     {{ops}}
     "12:\n"
 
-    // Exit: Throw a division by zero exception
+    // Exit: Throw a memory access violation exception
     "jmp 1f\n"
     {{ops}}
     "0:\n"
-    "div ah\n"
+    "jmp rax\n"
     {{ops}}
     "1:\n"
 

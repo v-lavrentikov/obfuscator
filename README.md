@@ -71,6 +71,7 @@ This type of snippets represents the body of a C function that takes a caller pa
     - **check_remote_debugger_present** - calling `CheckRemoteDebuggerPresent` Win32 API function
     - **is_debugger_present** - calling `IsDebuggerPresent` Win32 API function
     - **heap_protection** - checking the end of the allocated heap block
+    - **nt_query_information_process** - checking information from the process by calling `ntdll!NtQueryInformationProcess` Win32 API function
 - snds
   - c
     - **clone** - creating a copy of the executing process

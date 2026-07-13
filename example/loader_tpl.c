@@ -32,6 +32,7 @@ static DWORD WINAPI thread_proc(LPVOID lpParameter) {
         {{obf:*}} {{dbg:*}}
         {{obf:*}} {{dbg:*}}
         {{obf:*}} {{dbg:*}}
+        {{obf:*}} {{dbg:*}}
         {{obf:*}} {{api-n:Sleep}}((PVOID)DBG_THREAD_SLEEP_INTERVAL);
         {{obf:*}}
     }
@@ -45,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     {{obf:*}}
     {{obf:*}}
     {{caller-init}}
+    {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
