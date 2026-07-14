@@ -18,8 +18,12 @@ var (
 		"rdx": {"": "rdx", "d": "edx", "w": "dx", "b": "dl"},
 		"rsi": {"": "rsi", "d": "esi", "w": "si", "b": "sil"},
 		"rdi": {"": "rdi", "d": "edi", "w": "di", "b": "dil"},
+		"r8":  {"": "r8", "d": "r8d", "w": "r8w", "b": "r8b"},
+		"r9":  {"": "r9", "d": "r9d", "w": "r9w", "b": "r9b"},
+		"r10": {"": "r10", "d": "r10d", "w": "r10w", "b": "r10b"},
+		"r11": {"": "r11", "d": "r11d", "w": "r11w", "b": "r11b"},
 	}
-	snippetRegs = []string{"rax", "rbx", "rcx", "rdx", "rsi", "rdi"}
+	snippetRegs = []string{"rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"}
 	snippetOps  = []string{
 		"mov r1, r2",
 		"xchg r1, r2",
@@ -249,7 +253,7 @@ func fillAsmRegs(code string) string {
 	regsPool := make([]string, len(snippetRegs))
 	copy(regsPool, snippetRegs)
 
-	r := regexp.MustCompile(`{{(reg:[0-9]+)(?:|:(b|w|d))}}`)
+	r := regexp.MustCompile(`{{(reg:[0-9]{1})(?:|:(b|w|d))}}`)
 	return r.ReplaceAllStringFunc(code, func(str string) string {
 		groups := r.FindStringSubmatch(str)
 		key := groups[1]
