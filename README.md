@@ -37,11 +37,13 @@ The framework provides two types of instructions for API calls (only `kernel32.d
 
 To call API functions, the framework uses a special caller structure that should be initialized once in the project's main function and then passed as a parameter to every function that uses API calls or C code snippets. To work with the API caller, use the following instructions:
 - `{{caller-init}}` initializes the caller variable
-- `{{caller-var}}` inserts the caller variable, use it to pass caller to the function as a parameter
-- `{{caller-ptr}}` inserts the caller pointer, use it to pass caller to the function as a parameter
-- `{{caller-decl-var}}` inserts the caller variable declaration, use it to declare a function parameter 
-- `{{caller-decl-ptr}}` inserts the caller pointer declaration, uses it to declare a function parameter
-- `{{caller-cast}}` declares the caller pointer and initializes it by casting from another pointer, use it in case of API callback functions with arguments of type `void*`
+- `{{caller-var}}` inserts the caller variable. Use it to pass the caller variable to the function as a parameter
+- `{{caller-ptr}}` inserts the caller pointer. Use it to pass the caller pointer to the function as a parameter
+- `{{caller-decl-var}}` inserts the caller variable declaration. Use it to declare the caller function parameter as a variable
+- `{{caller-decl-ptr}}` inserts the caller pointer declaration. Use it to declare the caller function parameter as a pointer
+- `{{caller-cast}}` declares the caller variable and initializes it by casting from a pointer. Use it in case of API callback functions with arguments of type void*
+- `{{caller-kernel}}` gets the `kernel32.dll` module handle from the caller variable. Use it to access the kernel module when needed
+- `{{caller-proc}}` calls the `GetProcAddress` function from the caller variable. Use it to get API functions from modules other than the kernel
 ### Constants
 The framework allows to insert a random constant into the source code using the following instructions:
 - `{{value:byte}}` inserts an 8-bit random integer value

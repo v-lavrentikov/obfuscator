@@ -16,7 +16,7 @@ if (!hLib) {
 }
 
 {{obf:*}} {{str-realloc:lpName:NtQueryInformationProcess}}
-{{obf:*}} auto pfnNtQueryInformationProcess = (NtQueryInformationProcess)GetProcAddress(hLib, lpName);
+{{obf:*}} auto pfnNtQueryInformationProcess = (NtQueryInformationProcess){{caller-proc}}(hLib, lpName);
 {{obf:*}} {{str-free:lpName}}
 {{obf:*}}
 

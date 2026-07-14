@@ -174,6 +174,10 @@ func generateCaller(str string) string {
 		return CODE_CALLER_DECL_PTR
 	case "cast":
 		return CODE_CALLER_CAST
+	case "kernel":
+		return CODE_CALLER_KERNEL
+	case "proc":
+		return CODE_CALLER_PROC
 	default:
 		return ""
 	}

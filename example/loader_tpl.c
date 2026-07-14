@@ -4,21 +4,33 @@
 
 #define DBG_THREAD_SLEEP_INTERVAL           (1000 + {{value:byte}} + {{value:byte}})  // ~1s
 
-// *** Caller instructions ***
-// {{caller-init}}
-//   -> Initializes the caller variable
-// {{caller-var}}
-//   -> Inserts the caller variable, use it to pass caller to the function as a parameter
-// {{caller-ptr}}
-//   -> Inserts the caller pointer, use it to pass caller to the function as a parameter
-// {{caller-decl-var}}
-//   -> Inserts the caller variable declaration, use it to declare a function parameter
-// {{caller-decl-ptr}}
-//   -> Inserts the caller pointer declaration, uses it to declare a function parameter
-// {{caller-cast}}
-//   -> Declares the caller pointer and initializes it by casting from another pointer,
-//      use it in case of API callback functions with arguments of type void*
-// *** ***
+/**
+ * Caller instructions:
+ * 
+ * {{caller-init}}
+ *    Initializes the caller variable.
+ * {{caller-var}}
+ *    Inserts the caller variable. 
+ *    Use it to pass the caller variable to the function as a parameter.
+ * {{caller-ptr}}
+ *    Inserts the caller pointer.
+ *    Use it to pass the caller pointer to the function as a parameter.
+ * {{caller-decl-var}}
+ *    Inserts the caller variable declaration.
+ *    Use it to declare the caller function parameter as a variable.
+ * {{caller-decl-ptr}}
+ *    Inserts the caller pointer declaration.
+ *    Use it to declare the caller function parameter as a pointer.
+ * {{caller-cast}}
+ *    Declares the caller variable and initializes it by casting from a pointer.
+ *    Use it in case of API callback functions with arguments of type void*.
+ * {{caller-kernel}}
+ *    Gets the 'kernel32.dll' module handle from the caller variable.
+ *    Use it to access the kernel module when needed.
+ * {{caller-proc}}
+ *    Calls the 'GetProcAddress' function from the caller variable.
+ *    Use it to get API functions from modules other than the kernel.
+ */
 
 static DWORD WINAPI thread_proc(LPVOID lpParameter) {
     {{obf:*}}
@@ -46,6 +58,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     {{obf:*}}
     {{obf:*}}
     {{caller-init}}
+
+    // {{obf:*}} {{vmd:cpuid}}
+    // {{obf:*}} {{vmd:*}}
+
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
@@ -65,9 +81,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     {{obf:*}} {{snd:*}}
     {{obf:*}} {{snd:*}}
     {{obf:*}} {{snd:query_performance_counter,rdtsc}}
-
-    // {{obf:*}} {{vmd:*}}
-    // {{obf:*}} {{vmd:*}}
     
     {{obf:*}} {{shell-exec}}
     {{obf:*}}

@@ -37,6 +37,8 @@ const (
 	CODE_CALLER_DECL_VAR = "_obf_api_caller_t caller"
 	CODE_CALLER_DECL_PTR = "_obf_api_caller_t *caller"
 	CODE_CALLER_CAST     = "_obf_api_caller_t caller = *(_obf_api_caller_t *)"
+	CODE_CALLER_KERNEL   = "caller.kernel"
+	CODE_CALLER_PROC     = "caller.get_proc"
 
 	NAME_API_KERNEL           = "_obf_api_kernel"
 	NAME_API_GET_PROC_ADDRESS = "_obf_api_get_proc_address"
