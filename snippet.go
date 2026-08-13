@@ -223,7 +223,7 @@ func loadSnippets(templates []*Template, typ SnippetType, numVariants, maxAsmOps
 
 func processCCode(code string) string {
 	return processCode(code, func(sb *strings.Builder, line string) {
-		sb.WriteString(fmt.Sprintf("%4c%s%s", ' ', line, fmt.Sprintln()))
+		fmt.Fprintf(sb, "%4c%s%s", ' ', line, fmt.Sprintln())
 	})
 }
 
@@ -240,10 +240,10 @@ func processAsmCode(code string, maxOps int) string {
 				cmd = strings.Replace(cmd, "r2", snippetRegs[randInt(len(snippetRegs))], 1)
 				cmd = strings.Replace(cmd, "b1", fmt.Sprintf("0x%02X", randInt(256)), 1)
 				format := fmt.Sprintf("%%%dc\"%%s\\n\"%%s", pos+4)
-				sb.WriteString(fmt.Sprintf(format, ' ', cmd, fmt.Sprintln()))
+				fmt.Fprintf(sb, format, ' ', cmd, fmt.Sprintln())
 			}
 		} else {
-			sb.WriteString(fmt.Sprintf("%4c%s%s", ' ', line, fmt.Sprintln()))
+			fmt.Fprintf(sb, "%4c%s%s", ' ', line, fmt.Sprintln())
 		}
 	})
 }
@@ -287,7 +287,7 @@ func processCode(code string, step func(*strings.Builder, string)) string {
 			continue
 		}
 		for range count {
-			sb.WriteString(fmt.Sprintln())
+			fmt.Fprintln(&sb)
 		}
 		count = 0
 

@@ -28,4 +28,4 @@ go.work
 .vscode
 .DS_Store
 _data
-example/loader.c
+examples/loader/loader.c

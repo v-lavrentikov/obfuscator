@@ -14,6 +14,17 @@ type DataDefine struct {
 	data   []byte
 }
 
+var callerInstrs = map[string]string{
+	"init":     CODE_CALLER_INIT,
+	"var":      CODE_CALLER_VAR,
+	"ptr":      CODE_CALLER_PTR,
+	"decl-var": CODE_CALLER_DECL_VAR,
+	"decl-ptr": CODE_CALLER_DECL_PTR,
+	"cast":     CODE_CALLER_CAST,
+	"kernel":   CODE_CALLER_KERNEL,
+	"proc":     CODE_CALLER_PROC,
+}
+
 func generateCode(code string, table map[string]SnippetsMap, shell []byte) string {
 	dataDefs := map[string]*DataDefine{
 		NAME_API_KERNEL:           {0, VALUE_API_KERNEL, nil},
@@ -155,32 +166,12 @@ func generateStringCall(str string, cnt *int, defs map[string]*DataDefine) strin
 }
 
 func generateCaller(str string) string {
-	r := regexp.MustCompile(`^[0-9a-zA-Z-]+$`)
+	r := regexp.MustCompile(`^[a-z-]+$`)
 	groups := r.FindStringSubmatch(str)
-	if len(groups) < 1 {
+	if len(groups) == 0 {
 		return ""
 	}
-
-	switch groups[0] {
-	case "init":
-		return CODE_CALLER_INIT
-	case "var":
-		return CODE_CALLER_VAR
-	case "ptr":
-		return CODE_CALLER_PTR
-	case "decl-var":
-		return CODE_CALLER_DECL_VAR
-	case "decl-ptr":
-		return CODE_CALLER_DECL_PTR
-	case "cast":
-		return CODE_CALLER_CAST
-	case "kernel":
-		return CODE_CALLER_KERNEL
-	case "proc":
-		return CODE_CALLER_PROC
-	default:
-		return ""
-	}
+	return callerInstrs[groups[0]]
 }
 
 func fillCodePass3(code string, dataDefs map[string]*DataDefine, table map[string]SnippetsMap, shell []byte) string {
@@ -246,7 +237,7 @@ func generateDefs[V any](defs map[string]V, generate func(string, V) string) str
 
 	for _, key := range sortedKeys(defs) {
 		if sb.Len() > 0 {
-			sb.WriteString(fmt.Sprintln())
+			fmt.Fprintln(&sb)
 		}
 		sb.WriteString(generate(key, defs[key]))
 	}
@@ -259,7 +250,7 @@ func generateValues(typ string) string {
 	case "byte":
 		return fmt.Sprintf("%d", randInt(256))
 	case "uuid":
-		return strings.Replace(uuid.NewString(), "-", "", -1)
+		return strings.ReplaceAll(uuid.NewString(), "-", "")
 	case "guid":
 		return fmt.Sprintf("{%s}", uuid.NewString())
 	default:
@@ -336,8 +327,8 @@ func generateSnippetFuncs(table map[string]SnippetsMap, lang Lang) string {
 				}
 
 				if sb.Len() > 0 {
-					sb.WriteString(fmt.Sprintln())
-					sb.WriteString(fmt.Sprintln())
+					fmt.Fprintln(&sb)
+					fmt.Fprintln(&sb)
 				}
 				sb.WriteString(variant.code)
 			}
