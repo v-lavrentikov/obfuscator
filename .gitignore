@@ -28,4 +28,8 @@ go.work
 .vscode
 .DS_Store
 _data
-examples/loader/loader.c
+
+examples/loader/*
+!examples/loader/loader_tpl.c
+!examples/loader/Makefile
+
