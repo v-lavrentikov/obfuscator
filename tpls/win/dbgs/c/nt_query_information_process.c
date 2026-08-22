@@ -32,7 +32,7 @@ DWORD dwDebugPort;
 {{obf:*}}
 
 if (NT_SUCCESS(status) && (dwDebugPort != 0)) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 
@@ -41,7 +41,7 @@ DWORD dwDebugFlags;
 {{obf:*}}
 
 if (NT_SUCCESS(status) && (dwDebugFlags == 0)) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 
@@ -50,7 +50,7 @@ if (NT_SUCCESS(status) && (dwDebugFlags == 0)) {
 {{obf:*}}
 
 if (NT_SUCCESS(status) && (hDebugObject != 0)) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 

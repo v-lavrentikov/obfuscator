@@ -243,7 +243,7 @@ func processAsmCode(code string, maxOps int) string {
 			}
 
 			format := fmt.Sprintf(`%%%dc"%%s\n"%%s`, pos+4)
-			for range randInt(maxOps) + 1 {
+			for range randInt(maxOps + 1) {
 				cmd := snippetOps[randInt(len(snippetOps))]
 				cmd = r.ReplaceAllStringFunc(cmd, func(str string) string {
 					switch str {

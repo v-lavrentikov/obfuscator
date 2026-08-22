@@ -28,6 +28,7 @@ go.work
 .vscode
 .DS_Store
 _data
+_tests
 
 examples/win/loader/*
 !examples/win/loader/loader_tpl.c

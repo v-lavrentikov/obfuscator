@@ -25,8 +25,6 @@ while ({{api-n:fgets}}(line, sizeof(line), fp)) {
         {{obf:*}} pid = (long){{api-n:atoi}}(&line[10]);
         {{obf:*}} break;
     }
-
-    {{obf:*}}
 }
 
 {{obf:*}} {{str-free:tpl}}

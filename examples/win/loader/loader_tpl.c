@@ -30,6 +30,9 @@
  * {{caller-proc}}
  *    Calls the 'GetProcAddress' function from the caller variable.
  *    Use it to get API functions from modules other than the kernel.
+ * {{caller-exit}}
+ *    Calls the 'ExitProcess()' function. It is useful in case of cross-platform development, 
+ *    when the C snippet is not dependent on the operating system.
  */
 
 static DWORD WINAPI thread_proc(LPVOID lpParameter) {

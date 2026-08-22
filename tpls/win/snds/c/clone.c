@@ -19,5 +19,5 @@ STARTUPINFO si;
 {{obf:*}} {{api-n:GetModuleFileNameA}}(hModule, lpPath, MAX_PATH);
 {{obf:*}} {{api-n:CreateProcessA}}(lpPath, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 {{obf:*}} {{api-n:WaitForSingleObject}}(hEvent, INFINITE);
-{{obf:*}} {{api-n:ExitProcess}}(0);
+{{obf:*}} {{caller-exit}}(0);
 {{obf:*}}

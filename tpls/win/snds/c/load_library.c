@@ -2,7 +2,7 @@
 {{obf:*}}
 
 if (hLib) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 

@@ -13,7 +13,7 @@ LARGE_INTEGER f, t;
 {{obf:*}}
 
 if (result < interval) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 

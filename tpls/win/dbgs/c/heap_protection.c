@@ -15,7 +15,7 @@ do {
 {{obf:*}}
 
 if (dwResult == 0xABABABAB) {
-    {{obf:*}} {{api-n:ExitProcess}}(0);
+    {{obf:*}} {{caller-exit}}(0);
     {{obf:*}}
 }
 

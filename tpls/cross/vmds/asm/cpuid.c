@@ -15,6 +15,8 @@ asm volatile(
 
     "jmp 2f\n"
     {{ops}}
+    
+    // Call CPUID(1)
     "4:\n"    
     "xor eax, eax\n"
     "inc eax\n"         // eax = 0x01 for TEST instructions
@@ -29,40 +31,42 @@ asm volatile(
     "inc eax\n"         // eax = 0x01 for CPUID call
     "jmp 3b\n"
     {{ops}}
-    "5:\n"
 
     // Check: VMX support
+    "5:\n"
     "shr ecx, 5\n"
     "test ecx, eax\n"
     "jnz 10f\n"
     "jmp 0f\n"
     {{ops}}
-    "10:\n"
 
     // Check: Virtualization flag
+    "10:\n"
     "shr ecx, 26\n"
     "test ecx, eax\n"
     "jz 11f\n"
     "jmp 0f\n"
     {{ops}}
-    "11:\n"
 
     // Check: Thermal monitor support
+    "11:\n"
     "shr edx, 29\n"
     "test edx, eax\n"
     "jnz 12f\n"
     "jmp 0f\n"
     {{ops}}
-    "12:\n"
 
     // Exit: Throw a memory access violation exception
+    "12:\n"
     "jmp 1f\n"
     {{ops}}
     "0:\n"
     "jmp rax\n"
     {{ops}}
-    "1:\n"
 
+    // Passed
+    "1:\n"
+    
     ".att_syntax prefix\n"
     ::
     : "rax", "rbx", "rcx", "rdx", "memory"
