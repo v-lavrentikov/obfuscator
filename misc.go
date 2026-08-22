@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
+	"maps"
 	"math/big"
 	"os"
 	"slices"
@@ -26,8 +27,7 @@ func randInt(max int) int {
 
 func randBytes(count int) []byte {
 	bts := make([]byte, count)
-	_, err := rand.Read(bts)
-	if err != nil {
+	if _, err := rand.Read(bts); err != nil {
 		log.Fatalln(err)
 	}
 	return bts
@@ -46,10 +46,6 @@ func cFuncName(str string) string {
 }
 
 func formatBytesToCStrings(bts []byte) string {
-	if len(bts) == 0 {
-		return ""
-	}
-
 	var sb strings.Builder
 	for i, b := range bts {
 		mod := i % 16
@@ -57,11 +53,11 @@ func formatBytesToCStrings(bts []byte) string {
 			if i > 0 {
 				sb.WriteString("\n")
 			}
-			sb.WriteString(fmt.Sprintf("%4c\"", ' '))
+			fmt.Fprintf(&sb, `%4c"`, ' ')
 		}
-		sb.WriteString(fmt.Sprintf("\\x%02X", b))
+		fmt.Fprintf(&sb, `\x%02X`, b)
 		if mod == 15 || i == len(bts)-1 {
-			sb.WriteString("\"")
+			sb.WriteRune('"')
 		}
 	}
 	return sb.String()
@@ -76,10 +72,7 @@ func loadFile(path string) string {
 }
 
 func sortedKeys[K cmp.Ordered, V any](m map[K]V) []K {
-	keys := make([]K, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
+	keys := slices.Collect(maps.Keys(m))
 	slices.Sort(keys)
 	return keys
 }

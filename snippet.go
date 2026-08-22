@@ -191,7 +191,7 @@ func (snippets SnippetsMap) RandomVariant(langMask Lang) (*Variant, *Snippet) {
 	return variant, snippet
 }
 
-func loadSnippets(templates []*Template, typ SnippetType, numVariants, maxAsmOps int) SnippetsMap {
+func loadSnippets(templates []*Template, os OS, typ SnippetType, numVariants, maxAsmOps int) SnippetsMap {
 	snippets := make(SnippetsMap)
 
 	for _, template := range templates {
@@ -202,9 +202,14 @@ func loadSnippets(templates []*Template, typ SnippetType, numVariants, maxAsmOps
 		}
 
 		key := snippet.Key()
+		if _, ok := snippets[key]; ok {
+			log.Fatalf("Duplicate %s->%s->%s snippet found between OS %s and %s. Please fix the collision\n",
+				strings.ToUpper(snippet.typ.String()), strings.ToUpper(snippet.template.lang.String()),
+				strings.ToUpper(snippet.template.name), os.Title(), OS_CROSS.Title())
+		}
 		snippets[key] = snippet
 
-		for i := 0; i < numVariants; i++ {
+		for i := range numVariants {
 			name := fmt.Sprintf(TPL_VARIANT_NAME, typ, key, i)
 
 			var code string
@@ -228,18 +233,28 @@ func processCCode(code string) string {
 }
 
 func processAsmCode(code string, maxOps int) string {
+	r := regexp.MustCompile(`r1|r2|b1`)
+
 	return processCode(fillAsmRegs(code), func(sb *strings.Builder, line string) {
 		pos := strings.Index(line, "{{ops}}")
 		if pos > 0 {
 			if maxOps < 1 {
 				return
 			}
-			for i := 0; i <= randInt(maxOps); i++ {
+
+			format := fmt.Sprintf(`%%%dc"%%s\n"%%s`, pos+4)
+			for range randInt(maxOps) + 1 {
 				cmd := snippetOps[randInt(len(snippetOps))]
-				cmd = strings.Replace(cmd, "r1", snippetRegs[randInt(len(snippetRegs))], 1)
-				cmd = strings.Replace(cmd, "r2", snippetRegs[randInt(len(snippetRegs))], 1)
-				cmd = strings.Replace(cmd, "b1", fmt.Sprintf("0x%02X", randInt(256)), 1)
-				format := fmt.Sprintf("%%%dc\"%%s\\n\"%%s", pos+4)
+				cmd = r.ReplaceAllStringFunc(cmd, func(str string) string {
+					switch str {
+					case "r1", "r2":
+						return snippetRegs[randInt(len(snippetRegs))]
+					case "b1":
+						return fmt.Sprintf("0x%02X", randInt(256))
+					default:
+						return str
+					}
+				})
 				fmt.Fprintf(sb, format, ' ', cmd, fmt.Sprintln())
 			}
 		} else {
@@ -250,8 +265,7 @@ func processAsmCode(code string, maxOps int) string {
 
 func fillAsmRegs(code string) string {
 	regsMap := make(map[string]string)
-	regsPool := make([]string, len(snippetRegs))
-	copy(regsPool, snippetRegs)
+	regsPool := append([]string(nil), snippetRegs...)
 
 	r := regexp.MustCompile(`{{(reg:[0-9]{1})(?:|:(b|w|d))}}`)
 	return r.ReplaceAllStringFunc(code, func(str string) string {
@@ -281,7 +295,7 @@ func processCode(code string, step func(*strings.Builder, string)) string {
 	for sc.Scan() {
 		line := strings.TrimRightFunc(sc.Text(), unicode.IsSpace)
 
-		// Remove empty lines from the end of the snippet
+		// Remove blank lines from the end of the snippet only
 		if len(line) == 0 {
 			count++
 			continue

@@ -1,6 +1,4 @@
-#include <windows.h>
-#include <winternl.h>
-#include <intrin.h>
+{{os-header}}
 
 #ifdef _MSC_VER
     #define forceinline __forceinline

@@ -29,7 +29,11 @@ go.work
 .DS_Store
 _data
 
-examples/loader/*
-!examples/loader/loader_tpl.c
-!examples/loader/Makefile
+examples/win/loader/*
+!examples/win/loader/loader_tpl.c
+!examples/win/loader/Makefile
+
+examples/linux/loader/*
+!examples/linux/loader/loader_tpl.c
+!examples/linux/loader/Makefile
 

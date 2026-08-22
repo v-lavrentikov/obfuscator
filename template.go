@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	TPL_SNIPPETS_DIR     = "%s/tpls/%ss/%s"
-	TPL_SNIPPETS_OBF_DIR = "%s/tpls/obfs"
+	TPL_SNIPPETS_DIR     = "%s/tpls/%s/%ss/%s"
+	TPL_SNIPPETS_OBF_DIR = "%s/tpls/%s/obfs"
 	TPL_CODE_FILE        = "%s/tpls/code/%s.c"
+	TPL_CODE_OS_FILE     = "%s/tpls/code/%s/%s.c"
 	TPL_SNIPPET_KEY      = "%s_%s"
 	TPL_VARIANT_NAME     = "%s_%s_%02d"
 	// TPL_SNIPPET_C_FUNC   = "static void %s(_obf_api_caller_t caller) {\n%s}"
@@ -21,13 +22,11 @@ const (
 	TPL_SNIPPET_C_CALL   = "%s(caller);"
 	TPL_SNIPPET_ASM_CALL = "%s();"
 	TPL_API_PROC_NAME    = "_obf_api_proc_%s"
-	TPL_API_CALL_0       = "_obf_API_CALL_0(caller, %s)"
-	TPL_API_CALL_N       = "_obf_API_CALL_N(caller, %s)"
+	TPL_API_CALL         = "_obf_API_CALL_%s(caller, %s)"
 	TPL_DATA_DEFINE      = "#define %-43s (_obf_data + %d)"
 	TPL_CUSTOM_DEFINE    = "#define %-43s %v"
 	TPL_STRING_NAME      = "_obf_str_%02d_%s"
-	TPL_STRING_ALLOC     = "_obf_STRING_ALLOC(%s, %s);"
-	TPL_STRING_REALLOC   = "_obf_STRING_REALLOC(%s, %s);"
+	TPL_STRING_MALLOC    = "_obf_STRING_%s(%s, %s);"
 	TPL_STRING_FREE      = "_obf_STRING_FREE(%s);"
 
 	CODE_SHELL_CALL      = "_obf_execute_shellcode(caller);"
@@ -39,18 +38,42 @@ const (
 	CODE_CALLER_CAST     = "_obf_api_caller_t caller = *(_obf_api_caller_t *)"
 	CODE_CALLER_KERNEL   = "caller.kernel"
 	CODE_CALLER_PROC     = "caller.get_proc"
+	CODE_CALLER_EXIT     = "exit"
 
 	NAME_API_KERNEL           = "_obf_api_kernel"
 	NAME_API_GET_PROC_ADDRESS = "_obf_api_get_proc_address"
+	NAME_API_EXIT             = "_obf_api_exit"
 	NAME_API_KEY              = "_obf_api_key"
 	NAME_API_KEY_SIZE         = "_obf_api_key_size"
 	NAME_SHELL                = "_obf_shellcode"
 	NAME_SHELL_KEY            = "_obf_shellcode_key"
 	NAME_SHELL_SIZE           = "_obf_shellcode_size"
-
-	VALUE_API_KERNEL       = "kernel32.dll"
-	VALUE_GET_PROC_ADDRESS = "GetProcAddress"
 )
+
+var osConfig = map[OS]map[string]string{
+	OS_LINUX: {
+		NAME_API_KERNEL:           "libc.so",
+		NAME_API_GET_PROC_ADDRESS: "dlsym",
+		NAME_API_EXIT:             "exit",
+	},
+	OS_WIN: {
+		NAME_API_KERNEL:           "kernel32.dll",
+		NAME_API_GET_PROC_ADDRESS: "GetProcAddress",
+		NAME_API_EXIT:             "ExitProcess",
+	},
+}
+
+type OS string
+
+const (
+	OS_CROSS OS = "cross"
+	OS_LINUX OS = "linux"
+	OS_WIN   OS = "win"
+)
+
+func (os OS) Title() string {
+	return strings.ToUpper(string(os))
+}
 
 type Lang uint
 
@@ -68,7 +91,7 @@ func (lang Lang) String() string {
 	case LANG_ASM:
 		return "asm"
 	default:
-		return "unknown"
+		panic("Assert: An invalid Language was passed to be converted to a string")
 	}
 }
 
@@ -79,7 +102,7 @@ func (lang Lang) CallFormat() string {
 	case LANG_ASM:
 		return TPL_SNIPPET_ASM_CALL
 	default:
-		panic("Assert: Invalid Language passed for Snippet Call Format")
+		panic("Assert: An invalid language was passed for the Snippet Call Format")
 	}
 }
 
@@ -90,11 +113,11 @@ type Template struct {
 }
 
 func loadObfTpls() []*Template {
-	return loadTemplates(fmt.Sprintf(TPL_SNIPPETS_OBF_DIR, *workingDir), LANG_ASM)
+	return loadTemplates(fmt.Sprintf(TPL_SNIPPETS_OBF_DIR, *workingDir, OS_CROSS), LANG_ASM)
 }
 
-func loadTpls(typ SnippetType, lang Lang) []*Template {
-	return loadTemplates(fmt.Sprintf(TPL_SNIPPETS_DIR, *workingDir, typ, lang), lang)
+func loadTpls(typ SnippetType, os OS, lang Lang) []*Template {
+	return loadTemplates(fmt.Sprintf(TPL_SNIPPETS_DIR, *workingDir, os, typ, lang), lang)
 }
 
 func loadTemplates(dir string, lang Lang) []*Template {

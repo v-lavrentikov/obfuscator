@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"regexp"
+	"slices"
 	"strings"
 
-	"github.com/google/uuid"
+	"uuid"
 )
 
 type DataDefine struct {
@@ -25,14 +27,11 @@ var callerInstrs = map[string]string{
 	"proc":     CODE_CALLER_PROC,
 }
 
-func generateCode(code string, table map[string]SnippetsMap, shell []byte) string {
-	dataDefs := map[string]*DataDefine{
-		NAME_API_KERNEL:           {0, VALUE_API_KERNEL, nil},
-		NAME_API_GET_PROC_ADDRESS: {0, VALUE_GET_PROC_ADDRESS, nil},
-	}
+func generateCode(code string, os OS, table map[string]SnippetsMap, shell []byte) string {
+	dataDefs := generateDataDefs(os)
 
 	// Fill header, API and shellcode
-	code = fillCodePass1(code, len(shell) > 0)
+	code = fillCodePass1(code, os, len(shell) > 0)
 
 	// Fill the snippet calls:
 	// * First fill the named snippets to distribute them evenly, then the random ones
@@ -58,22 +57,26 @@ func loadCode(name string) string {
 	return loadFile(fmt.Sprintf(TPL_CODE_FILE, *workingDir, name))
 }
 
-func fillCodePass1(code string, hasShell bool) string {
-	var shell string
-	var shellExec string
+func loadOsCode(name string, os OS) string {
+	return loadFile(fmt.Sprintf(TPL_CODE_OS_FILE, *workingDir, os, name))
+}
+
+func fillCodePass1(code string, os OS, hasShell bool) string {
+	var shell, shellExec string
+
 	if hasShell {
-		shell = loadCode("shell")
+		shell = strings.Replace(loadCode("shell"), "{{os-shell}}", loadOsCode("shell", os), 1)
 		shellExec = CODE_SHELL_CALL
 	} else {
 		shell = "/* Shellcode not provided */"
 		shellExec = "/* TODO: Please provide shellcode */"
 	}
 
-	header := loadCode("header")
 	r := regexp.MustCompile(`{{(api|shell)}}`)
+	header := strings.Replace(loadCode("header"), "{{os-header}}", loadOsCode("header", os), 1)
 	header = r.ReplaceAllStringFunc(header, func(str string) string {
 		if str == "{{api}}" {
-			return loadCode("api")
+			return strings.Replace(loadCode("api"), "{{os-api}}", loadOsCode("api", os), 1)
 		}
 		return shell
 	})
@@ -88,15 +91,16 @@ func fillCodePass1(code string, hasShell bool) string {
 }
 
 func fillCodePass2(code string, defs map[string]*DataDefine) string {
-	cnt := 0
+	var cnt int
 
 	// Since the second group can contain any characters, we stop the search when the substring "}}" appears.
 	// Golang regexp does not currently support the statement "?!": `{{(api|str|caller)-(((?!}}).)+)}}`
 	r := regexp.MustCompile(`{{(api|str|caller)-(((\\\{|\\\}|)[^{}]*)+)}}`)
 	return r.ReplaceAllStringFunc(code, func(str string) string {
+		var call string
+
 		groups := r.FindStringSubmatch(str)
 		group := groups[2]
-		var call string
 
 		switch groups[1] {
 		case "api":
@@ -117,7 +121,7 @@ func fillCodePass2(code string, defs map[string]*DataDefine) string {
 func generateApiCall(str string, defs map[string]*DataDefine) string {
 	r := regexp.MustCompile(`^(0|n):([0-9a-zA-Z_]+)$`)
 	groups := r.FindStringSubmatch(str)
-	if len(groups) < 2 {
+	if len(groups) == 0 {
 		return ""
 	}
 
@@ -126,25 +130,19 @@ func generateApiCall(str string, defs map[string]*DataDefine) string {
 		defs[key] = &DataDefine{0, groups[2], nil}
 	}
 
-	var tpl string
-	if groups[1] == "0" {
-		tpl = TPL_API_CALL_0
-	} else {
-		tpl = TPL_API_CALL_N
-	}
-	return fmt.Sprintf(tpl, key)
+	return fmt.Sprintf(TPL_API_CALL, strings.ToUpper(groups[1]), key)
 }
 
 func generateStringCall(str string, cnt *int, defs map[string]*DataDefine) string {
 	r := regexp.MustCompile(`^(alloc|realloc|free):([0-9a-zA-Z_]+)($|:(.*)$)`)
 	groups := r.FindStringSubmatch(str)
-	if len(groups) < 4 {
+	if len(groups) == 0 {
 		return ""
 	}
 
 	call := groups[1]
 	if call == "free" {
-		if groups[3] == "" {
+		if len(groups[3]) == 0 {
 			return fmt.Sprintf(TPL_STRING_FREE, groups[2])
 		}
 		return ""
@@ -156,13 +154,7 @@ func generateStringCall(str string, cnt *int, defs map[string]*DataDefine) strin
 	defs[key] = &DataDefine{0, value, nil}
 	*cnt++
 
-	var tpl string
-	if call == "alloc" {
-		tpl = TPL_STRING_ALLOC
-	} else {
-		tpl = TPL_STRING_REALLOC
-	}
-	return fmt.Sprintf(tpl, key, name)
+	return fmt.Sprintf(TPL_STRING_MALLOC, strings.ToUpper(call), key, name)
 }
 
 func generateCaller(str string) string {
@@ -213,10 +205,7 @@ func fillCodePass3(code string, dataDefs map[string]*DataDefine, table map[strin
 func generateData(defs map[string]*DataDefine) string {
 	const interval = 32
 
-	var list []string
-	for name := range defs {
-		list = append(list, name)
-	}
+	list := slices.Collect(maps.Keys(defs))
 
 	bts := randBytes(1 + randInt(interval))
 	for len(list) > 0 {
@@ -224,7 +213,7 @@ func generateData(defs map[string]*DataDefine) string {
 		i := randInt(len(list))
 		def := defs[list[i]]
 		def.offset = len(bts)
-		bts = append(append(bts, def.data...), randBytes(1+randInt(interval))...)
+		bts = slices.Concat(bts, def.data, randBytes(1+randInt(interval)))
 		list = remove(list, i)
 	}
 	bts = append(bts, randBytes(1+randInt(interval))...)
@@ -245,14 +234,29 @@ func generateDefs[V any](defs map[string]V, generate func(string, V) string) str
 	return sb.String()
 }
 
+func generateDataDefs(os OS) map[string]*DataDefine {
+	conf := osConfig[os]
+
+	key := fmt.Sprintf(TPL_API_PROC_NAME, conf[NAME_API_EXIT])
+	callerInstrs[CODE_CALLER_EXIT] = fmt.Sprintf(TPL_API_CALL, "N", key)
+	conf[key] = conf[NAME_API_EXIT]
+	delete(conf, NAME_API_EXIT)
+
+	dataDefs := make(map[string]*DataDefine)
+	for key, val := range conf {
+		dataDefs[key] = &DataDefine{0, val, nil}
+	}
+	return dataDefs
+}
+
 func generateValues(typ string) string {
 	switch typ {
 	case "byte":
 		return fmt.Sprintf("%d", randInt(256))
 	case "uuid":
-		return strings.ReplaceAll(uuid.NewString(), "-", "")
+		return strings.ReplaceAll(uuid.New().String(), "-", "")
 	case "guid":
-		return fmt.Sprintf("{%s}", uuid.NewString())
+		return fmt.Sprintf("{%s}", uuid.New().String())
 	default:
 		return typ
 	}
@@ -335,5 +339,8 @@ func generateSnippetFuncs(table map[string]SnippetsMap, lang Lang) string {
 		}
 	}
 
+	if sb.Len() == 0 {
+		fmt.Fprintf(&sb, "/* %s-snippets not provided */", strings.ToUpper(lang.String()))
+	}
 	return sb.String()
 }
