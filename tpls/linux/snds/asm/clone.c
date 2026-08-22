@@ -23,7 +23,7 @@ asm volatile(
     "2:\n"
     "pop {{reg:3}}\n"
     "mov {{reg:2}}, rax\n"
-    "xor {{reg:1}}, {{reg:1}}\n"
+    "xor {{reg:1:d}}, {{reg:1:d}}\n"
     "cmp {{reg:2}}, {{reg:1}}\n"
     "jz 0f\n"
     "jmp 3b\n"
